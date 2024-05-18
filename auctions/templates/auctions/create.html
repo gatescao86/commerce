@@ -5,19 +5,26 @@
 
     <form action="{% url 'create' %}" method="POST">
         <div class="form-group">
+            <label for="title">{{ form.title.label }}:</label>
             {{ form.title }}
         </div>
         <div class="form-group">
-            <label for="description">Description:</label>
-            <textarea class="form-control" name="description" rows="4" cols="50"></textarea>
+            <label for="description">{{ form.description.label }}:</label>
+            <div>
+                {{ form.description }}
+            </div>      
         </div>
         <div class="form-group">
-            <label for="title">Starting bid:</label>
-            <input type="number">
+            <label for="bid">{{ form.bid.label }}:</label>
+            {{ form.bid }}
         </div>
         <div class="form-group">
-            <label for="title">Image URL:</label>
-            <input type="text">
+            <label for="image">{{ form.image.label }}</label>
+            {{ form.image }}
+        </div>
+        <div class="form-group">
+            <label for="category">{{ form.category.label }}</label>
+            {{ form.category }}
         </div>
         {% csrf_token %}
         <input type="submit" value="Save">

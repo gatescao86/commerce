@@ -12,9 +12,14 @@ from .models import User, Auction
 
 class CreateListingForm(forms.ModelForm):
     title = forms.CharField(label="Title", max_length=20, required=True)
-    description = forms.CharField(label="Description",required=True)
+    description = forms.CharField(label="Description", required=True, widget=forms.Textarea)
+    bid = forms.CharField(label="Starting bid:", max_length=20, required=False)
+    image = forms.CharField(label="Image URL:")
+    category = forms.CharField(label="Category:")
 
-
+    class Meta:
+        model = Auction
+        fields = ["title", "description", "bid", "image", "category"]
 
 # Views
 
@@ -80,5 +85,23 @@ def create(request):
         if form.is_valid():
             title = form.cleaned_data['title']
             description = form.cleaned_data['description']
+            bid = form.cleaned_data['bid']
+            image = form.cleaned_data['image']
+            category = form.cleaned_data['category']
+
+            auction = Auction(
+                title=title, 
+                description=description,
+                bid=bid,
+                image=image,
+                category=category)
+            
+            auction.save()
+        else:
+            return render(request, "auctions/create.html", {
+                "form": form
+            })
     
-    return render(request, "auctions/create.html")
+    return render(request, "auctions/create.html", {
+        "form": CreateListingForm()
+    })
