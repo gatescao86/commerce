@@ -1,21 +1,22 @@
 from django.contrib.auth import authenticate, login, logout
 from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
 from django.urls import reverse
 
 from django import forms
 
-from .models import User, Auction
+from .models import User, Auction, Watchlist
 
 # Forms
 
 class CreateListingForm(forms.ModelForm):
     title = forms.CharField(label="Title", max_length=20, required=True)
     description = forms.CharField(label="Description", required=True, widget=forms.Textarea)
-    bid = forms.CharField(label="Starting bid:", max_length=20, required=False)
-    image = forms.CharField(label="Image URL:")
-    category = forms.CharField(label="Category:")
+    bid = forms.CharField(label="Starting bid", max_length=20, required=False)
+    image = forms.CharField(label="Image URL:", required=False)
+    category = forms.CharField(label="Category:", required=False)
 
     class Meta:
         model = Auction
@@ -25,7 +26,9 @@ class CreateListingForm(forms.ModelForm):
 
 
 def index(request):
-    return render(request, "auctions/index.html")
+    return render(request, "auctions/index.html", {
+        "listings": Auction.objects.all()
+    })
 
 
 def login_view(request):
@@ -104,4 +107,34 @@ def create(request):
     
     return render(request, "auctions/create.html", {
         "form": CreateListingForm()
+    })
+
+def listing(request, auction_id):
+    
+    auction = get_object_or_404(Auction, id=auction_id)
+
+    if request.user.is_authenticated: 
+        is_in_watchlist = Watchlist.objects.filter(user=request.user, listing=auction).exists()
+        
+        if request.method == "POST":
+            watchlist_item = Watchlist.objects.filter(user=request.user, listing=auction)
+            if is_in_watchlist:
+                watchlist_item.delete()
+                is_in_watchlist = Watchlist.objects.filter(user=request.user, listing=auction).exists()
+            else:
+                Watchlist.objects.get_or_create(user=request.user, listing=auction)
+                is_in_watchlist = Watchlist.objects.filter(user=request.user, listing=auction).exists()
+           
+    return render(request, "auctions/listing.html", {
+        "listing": auction,
+        "is_in_watchlist": is_in_watchlist
+    })
+
+@login_required(login_url="login")
+def watch(request):
+
+    watchlist_items = Watchlist.objects.filter(user=request.user)
+
+    return render(request, "auctions/watch.html", {
+        "watchlist_items": watchlist_items
     })
